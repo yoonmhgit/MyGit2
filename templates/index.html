@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이미지 보정 애플리케이션</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 이미지 보정 애플리케이션</h1>
+            <p>이미지를 업로드하고 다양한 필터와 카메라 프로필을 적용해보세요</p>
+        </header>
+
+        <main>
+            <div class="upload-section">
+                <div id="dropZone" class="drop-zone">
+                    <div class="drop-zone-content">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p>이미지를 드래그하거나 클릭하여 업로드</p>
+                        <p class="file-info">JPG, PNG, GIF, BMP, TIFF, WEBP (최대 16MB)</p>
+                    </div>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                </div>
+            </div>
+
+            <div id="editorSection" class="editor-section" style="display: none;">
+                <div class="editor-layout">
+                    <div class="controls-panel">
+                        <div class="control-section">
+                            <h3>📊 기본 필터</h3>
+                            
+                            <div class="control-group">
+                                <label for="brightness">
+                                    밝기
+                                    <span class="value" id="brightnessValue">1.0</span>
+                                </label>
+                                <input type="range" id="brightness" min="0" max="2" step="0.01" value="1">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="contrast">
+                                    명암
+                                    <span class="value" id="contrastValue">1.0</span>
+                                </label>
+                                <input type="range" id="contrast" min="0" max="2" step="0.01" value="1">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="saturation">
+                                    채도
+                                    <span class="value" id="saturationValue">1.0</span>
+                                </label>
+                                <input type="range" id="saturation" min="0" max="2" step="0.01" value="1">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="sharpness">
+                                    선명도
+                                    <span class="value" id="sharpnessValue">1.0</span>
+                                </label>
+                                <input type="range" id="sharpness" min="0" max="2" step="0.01" value="1">
+                            </div>
+                        </div>
+
+                        <div class="control-section">
+                            <h3>🎨 색 조정</h3>
+                            
+                            <div class="control-group">
+                                <label for="temperature">
+                                    색온도
+                                    <span class="value" id="temperatureValue">0</span>
+                                </label>
+                                <input type="range" id="temperature" min="-1" max="1" step="0.01" value="0">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="hue">
+                                    색조 (Hue)
+                                    <span class="value" id="hueValue">0</span>
+                                </label>
+                                <input type="range" id="hue" min="-180" max="180" step="1" value="0">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="hslSaturation">
+                                    HSL 채도
+                                    <span class="value" id="hslSaturationValue">0</span>
+                                </label>
+                                <input type="range" id="hslSaturation" min="-1" max="1" step="0.01" value="0">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="lightness">
+                                    명도 (Lightness)
+                                    <span class="value" id="lightnessValue">0</span>
+                                </label>
+                                <input type="range" id="lightness" min="-1" max="1" step="0.01" value="0">
+                            </div>
+                        </div>
+
+                        <div class="control-section">
+                            <h3>📷 카메라 프로필</h3>
+                            
+                            <div class="camera-profiles">
+                                <div class="profile-option">
+                                    <input type="radio" id="profile-none" name="camera" value="" checked>
+                                    <label for="profile-none">
+                                        <strong>없음</strong>
+                                        <span>기본 설정</span>
+                                    </label>
+                                </div>
+                                {% for key, profile in camera_profiles.items() %}
+                                <div class="profile-option">
+                                    <input type="radio" id="profile-{{ key }}" name="camera" value="{{ key }}">
+                                    <label for="profile-{{ key }}">
+                                        <strong>{{ profile.name }}</strong>
+                                        <span>{{ profile.description }}</span>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="control-section">
+                            <div class="button-group">
+                                <button id="resetBtn" class="btn btn-secondary">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="23 4 23 10 17 10"></polyline>
+                                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                    </svg>
+                                    초기화
+                                </button>
+                                <button id="downloadBtn" class="btn btn-primary">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    다운로드
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="preview-panel">
+                        <div class="preview-container">
+                            <div class="image-wrapper">
+                                <img id="originalImage" alt="Original" style="display: none;">
+                                <img id="previewImage" alt="Preview">
+                                <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                                    <div class="spinner"></div>
+                                    <p>처리 중...</p>
+                                </div>
+                            </div>
+                            <div class="preview-info">
+                                <button id="newImageBtn" class="btn btn-secondary btn-sm">
+                                    새 이미지 업로드
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Flask + Python 이미지 보정 애플리케이션 MVP</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
